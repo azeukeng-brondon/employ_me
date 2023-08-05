@@ -1,8 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:employ_me/Jobs/jobs_screen.dart';
 import 'package:employ_me/Services/global_methods.dart';
+import 'package:employ_me/Services/global_variables.dart';
+import 'package:employ_me/Widgets/comments_widget.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:url_launcher/url_launcher_string.dart';
+import 'package:uuid/uuid.dart';
 
 class JobDetailsScreen extends StatefulWidget {
 
@@ -22,6 +27,8 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
+  final TextEditingController _commentController = TextEditingController();
+  bool _isCommenting = false;
   String? authorName;
   String? userImageUrl;
   String? jobCategory;
@@ -36,6 +43,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
   String? emailCompany = '';
   int applicants = 0;
   bool isDeadlineAvailable = false;
+  bool showComment = false;
 
   void getJobData() async
   {
@@ -104,6 +112,30 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
         SizedBox(height: 10,),
       ],
     );
+  }
+
+  applyForJob()
+  {
+    final Uri params = Uri(
+      scheme: 'nailto',
+      path: emailCompany,
+      query: 'subject=Applying for $jobTitle&body=Hello, please attach Resume CV file',
+    );
+    final url = params.toString();
+    launchUrlString(url);
+  }
+
+  void addNewApplicant() async
+  {
+    var docRef = FirebaseFirestore.instance
+        .collection('jobs')
+        .doc(widget.jonID);
+
+    docRef.update({
+      'applicants': applicants + 1,
+    });
+
+    Navigator.pop(context);
   }
 
   @override
@@ -390,6 +422,310 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                   ),
                 ),
               ),
+              Padding(
+                padding: const EdgeInsets.all(4.0),
+                child: Card(
+                  color: Colors.black54,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 10,),
+                        Center(
+                          child: Text(
+                            isDeadlineAvailable
+                            ?
+                            'Activity Recruiting, Send CV/Resume:'
+                            :
+                            'Deadline Passed away.',
+                            style: TextStyle(
+                              color: isDeadlineAvailable
+                                  ?
+                                  Colors.green
+                                  :
+                                  Colors.red,
+                              fontWeight: FontWeight.normal,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6,),
+                        Center(
+                          child: MaterialButton(
+                            onPressed: (){
+                              applyForJob();
+                            },
+                            color: Colors.blueAccent,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(13),
+                            ),
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 14),
+                              child: Text(
+                                'Easy Apply Now',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        dividerWidget(),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Upload on:',
+                              style: TextStyle(
+                                color: Colors.white,
+                              ),
+                            ),
+                            Text(
+                              postedDate == null
+                                  ?
+                                  ''
+                                  :
+                                  postedDate!,
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(
+                          height: 12,
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Deadline date:',
+                              style: TextStyle(
+                                color: Colors.white,
+                              ),
+                            ),
+                            Text(
+                              deadlineDate == null
+                                  ?
+                                  ''
+                                  :
+                              deadlineDate!,
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ],
+                        ),
+                        dividerWidget(),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+               Padding(
+                padding: const EdgeInsets.all(4.0),
+                child: Card(
+                  color: Colors.black54,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        AnimatedSwitcher(
+                            duration: const Duration(
+                              milliseconds: 500,
+                            ),
+                          child: _isCommenting
+                          ?
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Flexible(
+                                flex: 3,
+                                child: TextField(
+                                  controller: _commentController,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                  ),
+                                  maxLength: 200,
+                                  keyboardType: TextInputType.text,
+                                  maxLines: 6,
+                                  decoration: InputDecoration(
+                                    filled: true,
+                                    fillColor: Theme.of(context).scaffoldBackgroundColor,
+                                    enabledBorder: const UnderlineInputBorder(
+                                      borderSide: BorderSide(color: Colors.white),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(color: Colors.pink),
+                                    )
+                                  ),
+                                ),
+                              ),
+                              Flexible(
+                                child: Column(
+                                  children: [
+                                    Padding(
+                                      padding: EdgeInsets.symmetric(horizontal: 8),
+                                      child: MaterialButton(
+                                        onPressed: () async{
+                                          if(_commentController.text.length < 7)
+                                            {
+                                              GlobalMethod.showErrorDialog(
+                                                error: 'Comment cannot ne less than 7 characters',
+                                                ctx: context,
+                                              );
+                                            }
+                                          else
+                                            {
+                                              final _generatedId = const Uuid().v4();
+                                              await FirebaseFirestore.instance
+                                                  .collection('jobs')
+                                                  .doc(widget.jonID)
+                                                  .update({
+                                                'jobComments':
+                                                    FieldValue.arrayUnion([{
+                                                        'userId': FirebaseAuth.instance.currentUser!.uid,
+                                                        'commentId': _generatedId,
+                                                        'name': name,
+                                                        'userImageUrl': userImage,
+                                                        'commentBody': _commentController.text,
+                                                        'time': Timestamp.now(),
+                                                      }])
+                                              });
+                                              await Fluttertoast.showToast(
+                                                msg: 'Your comment has been added',
+                                                toastLength: Toast.LENGTH_LONG,
+                                                backgroundColor: Colors.grey,
+                                                fontSize: 18.0,
+                                              );
+                                              _commentController.clear();
+                                            }
+                                          setState(() {
+                                            showComment = true;
+                                          });
+                                        },
+                                        color: Colors.blueAccent,
+                                        elevation: 0,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: const Text(
+                                          'Post',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    TextButton(
+                                      onPressed: (){
+                                        setState(() {
+                                          _isCommenting = !_isCommenting;
+                                          showComment = false;
+                                        });
+                                      },
+                                      child: const Text('Cancel'),
+                                    )
+                                  ],
+                                ),
+                              )
+                            ],
+                          )
+                          :
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              IconButton(
+                                onPressed: (){
+                                  setState(() {
+                                    _isCommenting = !_isCommenting;
+                                  });
+                                },
+                                icon: const Icon(
+                                  Icons.add_comment,
+                                  color: Colors.blueAccent,
+                                  size: 40,
+                                ),
+                              ),
+                              const SizedBox(width: 10,),
+                              IconButton(
+                                onPressed: (){
+                                  showComment = false;
+                                },
+                                icon: const Icon(
+                                  Icons.arrow_drop_down_circle,
+                                  color: Colors.blueAccent,
+                                  size: 40,
+                                ),
+                              )
+                            ],
+                          ),
+                        ),
+                        showComment == false
+                            ?
+                            Container()
+                            :
+                            Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: FutureBuilder<DocumentSnapshot>(
+                                future: FirebaseFirestore.instance
+                                    .collection('jobs')
+                                    .doc(widget.jonID)
+                                    .get(),
+                                builder: (context, snapshot)
+                                {
+                                  if(snapshot.connectionState == ConnectionState.waiting)
+                                    {
+                                      return const Center(child: CircularProgressIndicator(),);
+                                    }
+                                  else
+                                    {
+                                      if(snapshot.data == null)
+                                        {
+                                          const Center(child: Text('No comment for this job'),);
+                                        }
+                                    }
+                                  return ListView.separated(
+                                    shrinkWrap: true,
+                                    physics: const NeverScrollableScrollPhysics(),
+                                    itemBuilder: (context, index)
+                                    {
+                                      return CommentWidget(
+                                        commentId: snapshot.data!['jobComments'] [index]['commentId'],
+                                        commenterId: snapshot.data!['jobComments'] [index]['userId'],
+                                        commenterName: snapshot.data!['jobComments'] [index]['name'],
+                                        commentBody: snapshot.data!['jobComments'] [index]['commentId'],
+                                        commenterImageUrl: snapshot.data!['jobComments'] [index]['userImageUrl'],
+                                      );
+                                    },
+                                    separatorBuilder: (context, index)
+                                    {
+                                      return const Divider(
+                                        thickness: 1,
+                                        color: Colors.grey,
+                                      );
+                                    },
+                                    itemCount: snapshot.data!['jobComments'].legth,
+                                  );
+                                },
+                              ),
+                            )
+                      ],
+                    ),
+                  ),
+                ),
+              )
             ],
           ),
         ),
@@ -397,3 +733,4 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
     );
   }
 }
+
