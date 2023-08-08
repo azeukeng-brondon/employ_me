@@ -396,7 +396,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                             ),
                         dividerWidget(),
                         const Text(
-                          'JOb Description',
+                          'Job Description',
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.white,

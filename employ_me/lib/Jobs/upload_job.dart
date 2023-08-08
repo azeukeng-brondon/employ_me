@@ -302,7 +302,7 @@ class _UploadJobNowState extends State<UploadJobNow> {
                               color: Colors.black,
                               fontSize: 40,
                               fontWeight: FontWeight.bold,
-                              fontFamily: 'Signatra'
+                              fontFamily: 'Signature'
                             ),
                           ),
                         ),
@@ -384,7 +384,7 @@ class _UploadJobNowState extends State<UploadJobNow> {
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 28,
-                                      fontFamily: 'Signatra',
+                                      fontFamily: 'Signature',
                                     ),
                                   ),
                                   SizedBox(width: 9,),

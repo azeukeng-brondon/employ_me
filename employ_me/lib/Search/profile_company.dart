@@ -1,6 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:employ_me/user_state.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttericon/font_awesome_icons.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 import '../Widgets/bottom_nav_bar.dart';
 
@@ -87,8 +90,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Widget _contactBy
+      ({
+    required Color color, required Function fct, required IconData icon
+})
+  {
+    return CircleAvatar(
+      backgroundColor: color,
+      radius: 25,
+      child: CircleAvatar(
+        radius: 23,
+        backgroundColor: Colors.white,
+        child: IconButton(
+          icon: Icon(
+            icon,
+            color: color,
+          ),
+          onPressed: (){
+            fct();
+          },
+        ),
+      ),
+    );
+  }
+
+  void _openWhatsAppChat() async
+  {
+    var url = 'https://wa.me/$phoneNumber?text=HelloWorld';
+    launchUrlString(url);
+  }
+
+  void _mailTo() async
+  {
+    final Uri params = Uri(
+      scheme: 'mailto',
+      path: email,
+      query: 'subject=Write subject here, Please&body=Hello, please write details here',
+    );
+    final url = params.toString();
+    launchUrlString(url);
+  }
+
+  void _callPhoneNumber() async
+  {
+    var url = 'tel://$phoneNumber?';
+    launchUrlString(url);
+  }
+
   @override
   Widget build(BuildContext context) {
+    Size size = MediaQuery.of(context).size;
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -163,10 +214,129 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               Padding(
                                 padding: const EdgeInsets.only(left: 10),
                                 child: userInfo(icon: Icons.phone, content: phoneNumber),
+                              ),
+                              const SizedBox(
+                                height: 15,
+                              ),
+                              const Divider(
+                                thickness: 1,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(
+                                height: 35,
+                              ),
+                              _isSameUser
+                                 ?
+                              Container()
+                                 :
+                                 Row(
+                                   mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                   children: [
+                                     _contactBy(
+                                       color: Colors.green,
+                                       fct: ()
+                                         {
+                                           _openWhatsAppChat();
+                                         },
+                                       icon: FontAwesome.whatsapp,
+                                     ),
+                                     _contactBy(
+                                       color: Colors.red,
+                                       fct: ()
+                                       {
+                                         _mailTo();
+                                       },
+                                       icon: Icons.mail_outline,
+                                     ),
+                                     _contactBy(
+                                       color: Colors.purple,
+                                       fct: ()
+                                       {
+                                         _callPhoneNumber();
+                                       },
+                                       icon: Icons.call,
+                                     ),
+                                   ],
+                                 ),
+                              !_isSameUser
+                              ?
+                              Container()
+                              :
+                              Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(bottom: 30),
+                                  child: MaterialButton(
+                                    onPressed: (){
+                                      _auth.signOut();
+                                      Navigator.push(context,
+                                          MaterialPageRoute(
+                                            // ignore: prefer_const_constructors
+                                            builder: (context) => UserState(),));
+                                    },
+                                    color: Colors.black,
+                                    elevation: 8,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(13),
+                                    ),
+                                    child: const Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 14),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            'Logout',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontFamily: 'signature',
+                                              fontSize: 28,
+                                            ),
+                                          ),
+                                          SizedBox(
+                                            width: 8,
+                                          ),
+                                          Icon(
+                                            Icons.logout,
+                                            color: Colors.white,
+                                          )
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               )
                             ],
                           ),
                         ),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: size.width * 0.26,
+                            height: size.width * 0.26,
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                width: 8,
+                                color: Theme.of(context).scaffoldBackgroundColor,
+                              ),
+                              image: DecorationImage(
+                                image: NetworkImage(
+                                  // ignore: prefer_if_null_operators, unnecessary_null_comparison
+                                  imageUrl == null
+                                      ?
+                                      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQrjuafoW1uFVj2BL5ehIuD4P3M6GasMN0o8744BdoK2A&s'
+                                      :
+                                      imageUrl,
+                                ),
+                                fit: BoxFit.fill,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
